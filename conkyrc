@@ -1,18 +1,19 @@
-# vim: set tw=1000 :
+# Compile with: DPI=140 LINE_SPACING=1.1 ./conkyc conkyrc > ~/.conkyrc
 
+background yes
 use_xft yes
 xftalpha 0.8
 text_buffer_size 2048
 
 temperature_unit fahrenheit
-update_interval 1
-update_interval_on_battery 4
+update_interval 5
+update_interval_on_battery 5
 total_run_times 0
 
 own_window yes
-own_window_argb_visual yes
+own_window_argb_visual no
 own_window_argb_value 0
-own_window_transparent no
+own_window_transparent yes
 own_window_type override
 own_window_hints below,sticky,skip_taskbar,skip_pager
 own_window_colour 000000
@@ -20,22 +21,26 @@ double_buffer yes
 
 if_up_strictness link
 
-minimum_size 280 50
-maximum_width 1020
+minimum_size 1600 50
+maximum_width 2880
 draw_shades no
 draw_outline no
 draw_borders no
 stippled_borders 0
-border_width 1
-
-default_graph_size 248 8
-
+border_width 0
 draw_graph_borders no
 
-alignment bottom_right
+default_bar_size   96  16
+default_graph_size 160 24
 
-gap_x 0
-gap_y -144
+short_units yes
+
+
+
+# Laptop display
+alignment bottom_right
+gap_x 50
+gap_y -320
 
 no_buffers yes
 
@@ -48,63 +53,106 @@ override_utf8_locale yes
 use_spacer none
 
 TEXT
-${font Ubuntu:size=12}${color 404040}
-@348,100 ${cpubar cpu1 4,80}  @+84,+0 ${cpubar cpu2 4,80}  @+84,+7  ${swapbar 4,80}
-@348,107 ${cpubar cpu3 4,80}  @+84,+0 ${cpubar cpu4 4,80}  @+168,+0 ${wireless_link_bar 4,80 wlan0}
 
-${font Ubuntu:size=14}${color 606060}
-@192,100 @+0,+-18 ${time %Y} ${color 404040} // ${color 606060} ${time %m%d} ${color 404040} //
-@348,100 @+168,+-54 @+168,+0 @+168,+0 ${color 404040}  // ${color c0c0c0} ${time %H%M}
+${font Ubuntu:size=8}
 
-${font Ubuntu:size=7}
-@348,100 @+168,+-54 @+168,+0 ${color 606060}${uptime_short}${color 606060}
-         @+0,+9              ${fs_free /}
+# Power display
 
-@348,111
-@+84,+0 ${execi 5 ls ~/.cd/mountpoints | wc -l} ${execi 5 ~/bin/alerts | wc -l} ${execi 5 wc -l < ~/r/persistent/self/queue}
+@0,148 ${color aaa}${execgraph perl -pe '$_ /= 1000000' /sys/class/power_supply/BAT0/power_now}
+  @+0,+12    ${color fff}${battery_time}
+  @+88,+-1  ${color fff}${execi 5 perl -pe '$_ = int($_ / (1000000))' /sys/class/power_supply/[Bb]*/power_now} ${color aaa}mW draw
+  @+-88,+16 ${battery_bar 8,80}
+  @+88,+-1  ${color fff}${execi 5 perl -pe '$_ = int($_ / (1000000))' /sys/class/power_supply/[Bb]*/energy_now} ${color aaa}mAh now
+  @+0,+16   ${color ccc}${execi 60 perl -pe '$_ = int($_ / (1000000))' /sys/class/power_supply/[Bb]*/energy_full} ${color aaa}mAh full
+  @+0,+16   ${color ccc}${execi 60 perl -pe '$_ = int($_ / (1000000))' /sys/class/power_supply/[Bb]*/energy_full_design} ${color aaa}mAh spec
 
-@348,100
-@+0,+-9
-@+0,+-9 ${color c0c0c0}${exec cat /sys/class/backlight/intel*/brightness}${color 606060}
+# Network display
+@240,96     ${color aaa}${upspeedgraph wlp3s0 24,160}
+  @+0,+12   ${downspeedgraph wlp3s0 24,160}
+  @+1,+12   ${color fff}${upspeed wlp3s0} ${color aaa}up
+  @+88,+-1  ${color fff}${downspeed wlp3s0} ${color aaa}down
+  @+-88,+16 ${color aaa}${wireless_link_bar 8,80 wlp3s0}
+  @+88,+-1  ${color fff}${wireless_bitrate wlp3s0} ${color aaa}link
+  @+-88,+16 ${color fff}${addr wlp3s0}
+  @+88,+-1  ${color fff}${gw_ip}
+  @+-88,+16   ${color fff}${wireless_essid wlp3s0}
 
-${color c0c0c0}
-@+0,+-9
-@+0,+-9 ${tcp_portmon 22 22 rip 0}
-@+0,+-9 ${tcp_portmon 22 22 rip 1}
-@+0,+-9 ${tcp_portmon 22 22 rip 2}
-@+0,+-9 ${tcp_portmon 22 22 rip 3}
-${color 404040}
+# Disk display
+@480,55 ${color aaa}${diskiograph_read 24,160}
+  @+0,+12 ${diskiograph_write 24,160}
+  @+1,+8   ${color fff}
+  @+0,+0    ${top_io io_read 1}
+  @+0,+16   ${top_io io_read 2}
+  @+0,+16   ${top_io io_read 3}
+  @+0,+16   ${top_io io_read 4}
+  @+48,+-53 ${top_io io_write 1}
+  @+0,+16   ${top_io io_write 2}
+  @+0,+16   ${top_io io_write 3}
+  @+0,+16   ${top_io io_write 4}
+  @+48,+-53 ${color ccc}
+  @+0,+0    ${top_io name 1}
+  @+0,+16   ${top_io name 2}
+  @+0,+16   ${top_io name 3}
+  @+0,+16   ${top_io name 4}
 
-@348,100
-@+84,+-9
-@+0,+-9 ${color c0c0c0}${exec sed 's/000$//' /sys/class/power_supply/[Bb]*/power_now} mW ${color 606060}
-@+0,+-9 ${execi 5 sed 's/000$//' /sys/class/power_supply/[Bb]*/energy_now} mWh
+# Memory display
+@720,6
+  @+0,+8    ${color fff}${memmax} ${color aaa}total
+  @+88,+0   ${color aaa}${membar 8,88}
+  @+-88,+14 ${color fff}${mem} ${color aaa}used
+  @+88,+-1  ${color fff}${memeasyfree} ${color aaa}buf / cache
+  @+-88,+13 ${color aaa}${memgraph 24,160}
+  @+-3,+8   ${color fff}
+  @+0,+0    ${top_mem mem 1}
+  @+0,+16   ${top_mem mem 2}
+  @+0,+16   ${top_mem mem 3}
+  @+0,+16   ${top_mem mem 4}
+  @+48,+-53 ${color ccc}
+  @+0,+0    ${top_mem mem_res 1}
+  @+0,+16   ${top_mem mem_res 2}
+  @+0,+16   ${top_mem mem_res 3}
+  @+0,+16   ${top_mem mem_res 4}
+  @+48,+-54 ${color ccc}
+  @+0,+0    ${top_mem name 1}
+  @+0,+16   ${top_mem name 2}
+  @+0,+16   ${top_mem name 3}
+  @+0,+16   ${top_mem name 4}
 
-@+84,100
-@+0,+-9  ${color c0c0c0}${wireless_essid wlan0}${color 606060} ${wireless_bitrate wlan0}
-@+0,+-9  ${color c0c0c0}${addr wlan0}${color 606060}
-@+0,+-9  ${nameserver 0}
-@+0,+-9  ${gw_ip}
-@+0,+-18 ${color c0c0c0}@+-42,+-1${memgraph 8,122}@+42,+1${color 606060}
+# CPU display
+@950,-20 ${color aaa}${cpugraph cpu0 60,360}
+  @+380,-48  ${color 999999}
+  @+0,+0      ${cpu cpu1}
+  @+20,+-1    ${cpu cpu2}
+  @+-20,+16   ${cpu cpu3}
+  @+20,+-1    ${cpu cpu4}
+  @+20,+-18   ${cpu cpu5}
+  @+20,+-1    ${cpu cpu6}
+  @+-20,+16   ${cpu cpu7}
+  @+20,+-1    ${cpu cpu8}
+  # Top process column 1
+  @+-447,+32  ${color fff}
+  @+0,+0      ${top cpu 1}
+  @+0,+20     ${top cpu 2}
+  @+0,+20     ${top cpu 3}
+  @+0,+20     ${top cpu 4}
+  @+48,+-65   ${color ccc}
+  @+0,+0      ${top name 1}
+  @+0,+20     ${top name 2}
+  @+0,+20     ${top name 3}
+  @+0,+20     ${top name 4}
 
-@+84,100
-@+0,+-9
-@+0,+-9  ${color c0c0c0}${addr eth0}${color 606060}
-@+0,+-9  ${nameserver 1}
-@+0,+-9  ${nameserver 2}
-@+0,+-18 ${color 404040}@+0,+-1${battery_bar 7,80}@+0,+1${color 606060}
-@+0,+-12 ${color 404040}${execgraph perl -pe '$_ /= 400000' /sys/class/power_supply/BAT0/power_now}
+  @+160,+-65  ${color fff}
+  @+0,+0      ${top cpu 5}
+  @+0,+20     ${top cpu 6}
+  @+0,+20     ${top cpu 7}
+  @+0,+20     ${top cpu 8}
+  @+48,+-65  ${color ccc}
+  @+0,+0      ${top name 5}
+  @+0,+20     ${top name 6}
+  @+0,+20     ${top name 7}
+  @+0,+20     ${top name 8}
 
-@+84,45 @+42,+0 ${color c0c0c0}${cpugraph cpu0 8,122} @+-126,+0
-
-@+-42,100 ${color 404040}
-@+0,+11    ${diskiograph_read  /dev/sda 8,122} ${color 606060} @+126,+0 ${diskio_read  /dev/sda} @+-126,+0 ${color 404040}
-@+0,+11    ${diskiograph_write /dev/sda 8,122} ${color 606060} @+126,+0 ${diskio_write /dev/sda} @+-126,+0 ${color 404040}
-
-@+126,+0
-@+0,+11 ${execi 5 amixer get Master | tail -n1 | sed 's/.*\[\([0-9]\+\)%.*/\1/g'}%
-@+0,+11 ${execi 5 sed 's/000$//' /sys/class/thermal/thermal_zone0/temp}C
-@+-126,+-22
-
-@+168,+-11 ${downspeedgraph wlan0 8,122} ${color 606060} @+126,+0 ${downspeed wlan0} @+-126,+0 ${color 404040}
-@+0,+11    ${upspeedgraph   wlan0 8,122} ${color 606060} @+126,+0 ${upspeed   wlan0} @+-126,+0 ${color 404040}
+# Host
+## We know this part works...
+@950,-81 ${font Ubuntu:size=22}${color E2944A}λ. ${color aaa}${nodename_short}
+@1250,-140 ${color ccc}${font Ubuntu:size=9}// ${color aaa}${time %Y-%m-%d} ${color fff}${time %H.%M}
